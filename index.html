@@ -21,7 +21,6 @@
   --notdone:#ffd6d6;
 }
 
-/* DARK MODE */
 body.dark{
   --bg:#1e293b;
   --card:#2c3e50;
@@ -41,7 +40,6 @@ body{
   color:var(--text);
 }
 
-/* HEADER */
 header{
   display:flex;
   justify-content:space-between;
@@ -58,7 +56,6 @@ button{
   cursor:pointer;
 }
 
-/* TABLE */
 .container{
   padding:10px;
   overflow-x:auto;
@@ -81,18 +78,16 @@ th{
   background:var(--header);
 }
 
-/* HABIT COLUMN */
 .habit-col{
   text-align:left;
   font-weight:600;
+  cursor:pointer;
 }
 
-/* ROW COLORS */
 .progress-row{background:var(--progress);}
 .done-row{background:var(--done);}
 .notdone-row{background:var(--notdone);}
 
-/* FAB */
 .fab{
   position:fixed;
   bottom:20px;
@@ -105,7 +100,6 @@ th{
   color:white;
 }
 
-/* ANALYSIS PAGE */
 #analysisPage{
   display:none;
   padding:20px;
@@ -117,17 +111,11 @@ th{
   background:var(--card);
   padding:15px;
   border-radius:10px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
 
 canvas{
   width:100% !important;
   height:200px !important;
-}
-
-/* MOBILE */
-@media(max-width:600px){
-  th,td{font-size:10px;}
 }
 </style>
 </head>
@@ -144,10 +132,8 @@ canvas{
   </div>
 </header>
 
-<!-- MAIN -->
 <div id="mainPage" class="container"></div>
 
-<!-- ANALYSIS -->
 <div id="analysisPage">
   <button onclick="closeAnalysis()">⬅ Back</button>
 
@@ -205,44 +191,41 @@ function render(){
   }
   html+='</tr>';
 
-  // HABITS
   habits.forEach((h,i)=>{
-    html+=`<tr><td class="habit-col">${h.name}</td>`;
+    html+=`<tr>
+      <td class="habit-col" onclick="manageHabit(${i})">${h.name}</td>`;
+
     for(let d=0;d<7;d++){
-      let checked = h.days?.[currentWeek]?.[d]||false;
+      let checked = h.days?.[currentWeek]?.[d] === true;
 
       html+=`<td>
-      <input type="checkbox" ${checked?'checked':''}
+      <input type="checkbox" ${checked ? 'checked' : ''}
       onclick="toggle(${i},${d})"></td>`;
     }
     html+='</tr>';
   });
 
-  // CALCULATIONS
   let doneArr=[],totalArr=[];
 
   for(let d=0;d<7;d++){
     let done=0,total=habits.length;
     habits.forEach(h=>{
-      if(h.days?.[currentWeek]?.[d]) done++;
+      if(h.days?.[currentWeek]?.[d] === true) done++;
     });
     doneArr[d]=done;
     totalArr[d]=total;
   }
 
-  // PROGRESS %
   html+='<tr class="progress-row"><td>Progress %</td>';
   doneArr.forEach((d,i)=>{
     html+=`<td>${totalArr[i]?Math.round(d/totalArr[i]*100):0}%</td>`;
   });
   html+='</tr>';
 
-  // DONE
   html+='<tr class="done-row"><td>Done</td>';
   doneArr.forEach(d=>html+=`<td>${d}</td>`);
   html+='</tr>';
 
-  // NOT DONE
   html+='<tr class="notdone-row"><td>Not Done</td>';
   doneArr.forEach((d,i)=>html+=`<td>${totalArr[i]-d}</td>`);
   html+='</tr>';
@@ -256,7 +239,7 @@ function toggle(i,d){
   if(!habits[i].days) habits[i].days={};
   if(!habits[i].days[currentWeek]) habits[i].days[currentWeek]=[];
 
-  habits[i].days[currentWeek][d]=!habits[i].days[currentWeek][d];
+  habits[i].days[currentWeek][d] = !(habits[i].days[currentWeek][d] === true);
 
   save();
   render();
@@ -270,6 +253,28 @@ function addHabit(){
   habits.push({name,days:{}});
   save();
   render();
+}
+
+/* EDIT / DELETE */
+function manageHabit(index){
+  let action = prompt("Type:\n1 → Edit\n2 → Delete");
+
+  if(action==="1"){
+    let newName = prompt("Edit habit:", habits[index].name);
+    if(newName){
+      habits[index].name = newName;
+      save();
+      render();
+    }
+  }
+
+  else if(action==="2"){
+    if(confirm("Delete this habit?")){
+      habits.splice(index,1);
+      save();
+      render();
+    }
+  }
 }
 
 /* NAVIGATION */
@@ -311,7 +316,6 @@ function closeAnalysis(){
 }
 
 function drawCharts(){
-
   let dCtx=document.getElementById("dailyChart").getContext("2d");
   let wCtx=document.getElementById("weeklyChart").getContext("2d");
   let pCtx=document.getElementById("progressChart").getContext("2d");
